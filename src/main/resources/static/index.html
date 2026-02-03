@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberBurst-21-JP</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <div class="container">
+        <!-- Header / Status -->
+        <header>
+            <h1 class="neon-title">CYBER BURST: 21</h1>
+            <div id="game-status" class="status-bar">CONNECTING...</div>
+        </header>
+
+        <!-- Opponent Area -->
+        <div id="opponent-area" class="player-card opponent">
+            <h2 class="player-name">OPPONENT</h2>
+            <div class="stats">
+                <div>SCORE: <span id="opp-score" class="neon-text">0</span></div>
+                <div>TIME: <span id="opp-time">180</span></div>
+            </div>
+            <div class="card-status" id="opp-status">WAITING</div>
+        </div>
+
+        <!-- Center Game Area -->
+        <main class="game-center">
+            <div class="target-display">
+                <p class="label">SECURE LINK:</p>
+                <div id="previous-word" class="word-display">START</div>
+            </div>
+            <div class="next-char-display">
+                <p class="label">TARGET:</p>
+                <div id="target-char" class="neon-giant">T</div>
+            </div>
+        </main>
+
+        <!-- Player Area -->
+        <div id="player-area" class="player-card self">
+            <h2 class="player-name">YOU</h2>
+            <div class="stats">
+                <div>SCORE: <span id="my-score" class="neon-text">0</span></div>
+                <div>TIME: <span id="my-time">180</span></div>
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="word-input" placeholder="TYPE WORD..." autocomplete="off" disabled>
+                <button id="send-btn" disabled>送信</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>INITIALIZE LINK</h2>
+            <input type="text" id="username-input" placeholder="CODENAME">
+            <button id="join-btn">CONNECT</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
