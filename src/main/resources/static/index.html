@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +9,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
+
 <body>
     <div class="cyber-grid"></div>
-    
+
     <div class="container">
         <!-- Header / Status -->
         <header>
@@ -31,11 +33,11 @@
         <!-- Center Game Area -->
         <main class="game-center">
             <div class="target-display">
-                <p class="label">SECURE LINK:</p>
+                <p class="label">前の単語:</p>
                 <div id="previous-word" class="word-display">START</div>
             </div>
             <div class="next-char-display">
-                <p class="label">TARGET:</p>
+                <p class="label">次の文字:</p>
                 <div id="target-char" class="neon-giant">T</div>
             </div>
         </main>
@@ -47,9 +49,9 @@
                 <div>SCORE: <span id="my-score" class="neon-text">0</span></div>
                 <div>TIME: <span id="my-time">180</span></div>
             </div>
-            
+
             <div class="input-container">
-                <input type="text" id="word-input" placeholder="TYPE WORD..." autocomplete="off" disabled>
+                <input type="text" id="word-input" placeholder="単語を入力..." autocomplete="off" disabled>
                 <button id="send-btn" disabled>送信</button>
             </div>
         </div>
@@ -59,11 +61,12 @@
     <div id="login-modal" class="modal">
         <div class="modal-content">
             <h2>INITIALIZE LINK</h2>
-            <input type="text" id="username-input" placeholder="CODENAME">
-            <button id="join-btn">CONNECT</button>
+            <input type="text" id="username-input" placeholder="コードネーム">
+            <button id="join-btn">接続</button>
         </div>
     </div>
 
     <script src="app.js"></script>
 </body>
+
 </html>

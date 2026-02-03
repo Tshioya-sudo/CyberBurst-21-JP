@@ -20,8 +20,8 @@ public class GameService {
     private final List<String> playerOrder = new ArrayList<>();
 
     private String currentTurnPlayerId;
-    private String previousWord = "START"; // Initial word
-    private String targetChar = "t"; // Last char of START (case insensitive safe)
+    private String previousWord = "スタート"; // Initial word
+    private String targetChar = "ト"; // Last char of START
     private boolean isGameOver = false;
     private String message = "Waiting for players...";
 
@@ -63,45 +63,49 @@ public class GameService {
         }
 
         Player player = players.get(playerId);
-        word = word.trim().toLowerCase();
+        word = word.trim(); // Do not lowercase for Japanese
 
         // 1. Validation
         if (word.isEmpty())
-            return getGameState(); // Ignore empty
+            return getGameState();
 
-        // Check starting char
-        if (!word.startsWith(targetChar)) {
-            // Invalid word, maybe penalize? For now just ignore or send error message in
-            // state?
-            // Let's strict rule: must match.
-            // We can add a "message" field for temporary errors, but let's keep it simple.
+        // Convert to Hiragana for consistency check (Simplified logic)
+        // ideally we use a library but for core Java we can just rely on user input
+        // matching visually
+        // or check simple mapping if needed. For now, strict end-char matching.
+
+        String lastCharOfPrevious = targetChar;
+        String firstCharOfNext = word.substring(0, 1);
+
+        // Simple validation: ignore case/type match for now, assume player types
+        // matching char
+        // But for Japanese "Ringos" -> "Su", we need to check "Su" == word.start
+
+        if (!isMatch(lastCharOfPrevious, firstCharOfNext)) {
+            // Invalid start char
             return getGameState();
         }
 
-        // 2. "N" Rule
-        if (word.endsWith("n") || word.endsWith("ん")) {
+        // 2. "N" Rule (ン/ん)
+        if (word.endsWith("n") || word.endsWith("ん") || word.endsWith("ン")) {
             isGameOver = true;
             player.setAlive(false);
-            message = "GAME OVER! " + player.getName() + " ended with 'n'!";
+            message = "GAME OVER! " + player.getName() + " ended with 'N' (ん)!";
             broadcastState();
             return getGameState();
         }
 
-        // 3. Scoring
+        // 3. Scoring (Length of word)
         int points = word.length();
         player.addScore(points);
         previousWord = word;
-        targetChar = word.substring(word.length() - 1);
+
+        // Extract new target char (handle small characters and extenders)
+        targetChar = extractTargetChar(word);
 
         // 4. Target 21 & Burst
         if (player.getScore() == 21) {
-            // Maybe instant win? Or wait for others?
-            // User says "Aim for total score closest to 21".
-            // Usually usually blackjack is instant win if 21?
-            // Let's say if 21, you are safe, but game continues until someone bursts or
-            // time out?
-            // Actually "Burst: If score >= 22, the player immediately LOSES".
-            // So 21 is just best score.
+            // 21 is safe/good.
         } else if (player.getScore() >= 22) {
             isGameOver = true;
             player.setAlive(false);
@@ -116,6 +120,53 @@ public class GameService {
 
         broadcastState();
         return getGameState();
+    }
+
+    private boolean isMatch(String target, String input) {
+        // Simple equality or Katakana<->Hiragana loose match could go here
+        // For MVP, strict match or simple conversion
+        // Let's implement simple normalization if possible, otherwise strict
+        return target.equals(input) ||
+                toHiragana(target).equals(toHiragana(input));
+    }
+
+    private String extractTargetChar(String word) {
+        if (word.isEmpty())
+            return "";
+        char last = word.charAt(word.length() - 1);
+
+        // Handle prolonged sound mark "ー" (take vowel of previous char)
+        if (last == 'ー' && word.length() > 1) {
+            char prev = word.charAt(word.length() - 2);
+            // Simple mapping for vowels (a,i,u,e,o)
+            // This is complex without library.
+            // Simplified Rule: Ignore "ー" and take previous character?
+            // Often used rule: "Computer" -> "Ta". "Sakka-" -> "Ka".
+            last = word.charAt(word.length() - 2);
+        }
+
+        // Handle small chars (ゃ, ゅ, ょ, っ) -> Convert to big (や, ゆ, よ, つ)
+        return normalizeSmallChar(String.valueOf(last));
+    }
+
+    private String normalizeSmallChar(String s) {
+        return s.replace('ゃ', 'や').replace('ゅ', 'ゆ').replace('ょ', 'よ').replace('っ', 'つ')
+                .replace('ャ', 'ヤ').replace('ュ', 'ユ').replace('ョ', 'ヨ').replace('ッ', 'ツ')
+                .replace('ァ', 'ア').replace('ィ', 'イ').replace('ゥ', 'ウ').replace('ェ', 'エ').replace('ォ', 'オ')
+                .replace('ぁ', 'あ').replace('ぃ', 'い').replace('ぅ', 'う').replace('ぇ', 'え').replace('ぉ', 'お');
+    }
+
+    // Very basic Hiragana converter for matching logic (Katakana -> Hiragana)
+    private String toHiragana(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            if (c >= 'ァ' && c <= 'ン') {
+                sb.append((char) (c - 0x60));
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private void switchTurn() {

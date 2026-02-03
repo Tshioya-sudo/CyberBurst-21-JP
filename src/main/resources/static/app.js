@@ -125,7 +125,7 @@ function renderGame(gameState) {
     // 1. Update Game Status
     statusDiv.innerText = gameState.message;
     prevWordDiv.innerText = gameState.previousWord;
-    targetCharDiv.innerText = gameState.targetChar.toUpperCase();
+    targetCharDiv.innerText = gameState.targetChar;
 
     // 2. Update Players
     const myPlayer = gameState.players.find(p => p.id === playerId);
@@ -139,7 +139,7 @@ function renderGame(gameState) {
         document.getElementById('opponent-area').querySelector('.player-name').innerText = opponent.name;
     } else {
         // Reset opponent UI if waiting
-        document.getElementById('opponent-area').querySelector('.player-name').innerText = "WAITING...";
+        document.getElementById('opponent-area').querySelector('.player-name').innerText = "対戦待ち...";
         document.getElementById('opp-score').innerText = "0";
         document.getElementById('opp-time').innerText = "180";
     }
