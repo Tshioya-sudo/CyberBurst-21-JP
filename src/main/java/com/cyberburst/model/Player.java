@@ -6,6 +6,7 @@ public class Player {
     private int score;
     private int timeRemaining; // in seconds
     private boolean isAlive;
+    private boolean hasPassed; // New field
 
     public Player(String id, String name) {
         this.id = id;
@@ -13,6 +14,7 @@ public class Player {
         this.score = 0;
         this.timeRemaining = 180; // Default time bank
         this.isAlive = true;
+        this.hasPassed = false;
     }
 
     // Getters and Setters
@@ -46,6 +48,14 @@ public class Player {
 
     public void setAlive(boolean alive) {
         isAlive = alive;
+    }
+
+    public boolean isHasPassed() {
+        return hasPassed;
+    }
+
+    public void setHasPassed(boolean hasPassed) {
+        this.hasPassed = hasPassed;
     }
 
     public void addScore(int points) {

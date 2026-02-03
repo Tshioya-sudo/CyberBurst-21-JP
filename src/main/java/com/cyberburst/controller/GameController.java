@@ -34,4 +34,11 @@ public class GameController {
         String word = payload.get("word");
         return gameService.processMove(playerId, word);
     }
+
+    @MessageMapping("/pass")
+    @SendTo("/topic/game")
+    public GameState passTurn(Map<String, String> payload) {
+        String playerId = payload.get("playerId");
+        return gameService.passTurn(playerId);
+    }
 }

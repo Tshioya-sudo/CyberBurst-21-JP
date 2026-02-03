@@ -122,6 +122,66 @@ public class GameService {
         return getGameState();
     }
 
+    public synchronized GameState passTurn(String playerId) {
+        if (isGameOver || !playerId.equals(currentTurnPlayerId)) {
+            return getGameState();
+        }
+
+        Player player = players.get(playerId);
+        player.setHasPassed(true);
+        message = player.getName() + " PASSED!";
+
+        // Check if all active players passed
+        long activeCount = players.values().stream().filter(Player::isAlive).count();
+        long passedCount = players.values().stream().filter(p -> p.isAlive() && p.isHasPassed()).count();
+
+        if (passedCount >= activeCount) {
+            // Game Over (Everyone passed)
+            isGameOver = true;
+            message = "GAME OVER! All players passed.";
+            determineWinner();
+        } else {
+            // Switch turn
+            switchTurn();
+            // If game not over, update message
+            if (!isGameOver) {
+                message = players.get(currentTurnPlayerId).getName() + "'s turn.";
+            }
+        }
+
+        broadcastState();
+        return getGameState();
+    }
+
+    private void determineWinner() {
+        Player winner = null;
+        int bestDiff = Integer.MAX_VALUE;
+
+        for (Player p : players.values()) {
+            if (!p.isAlive())
+                continue;
+            // Target is 21.
+            int diff = 21 - p.getScore();
+            // If they didn't burst (score <= 21), diff is >= 0
+            // If they burst, they are already !isAlive usually, but check score rule just
+            // in case
+            if (p.getScore() <= 21) {
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    winner = p;
+                } else if (diff == bestDiff) {
+                    // Draw logic? For now first found wins or draw message
+                }
+            }
+        }
+
+        if (winner != null) {
+            message = "WINNER: " + winner.getName() + " (Score: " + winner.getScore() + ")";
+        } else {
+            message = "DRAW! No winner.";
+        }
+    }
+
     private boolean isMatch(String target, String input) {
         // Simple equality or Katakana<->Hiragana loose match could go here
         // For MVP, strict match or simple conversion
@@ -171,8 +231,22 @@ public class GameService {
 
     private void switchTurn() {
         int currentIndex = playerOrder.indexOf(currentTurnPlayerId);
-        int nextIndex = (currentIndex + 1) % playerOrder.size();
-        currentTurnPlayerId = playerOrder.get(nextIndex);
+        int start = currentIndex;
+
+        do {
+            currentIndex = (currentIndex + 1) % playerOrder.size();
+            String pid = playerOrder.get(currentIndex);
+            Player p = players.get(pid);
+
+            // Found a player who is alive and NOT passed
+            if (p.isAlive() && !p.isHasPassed()) {
+                currentTurnPlayerId = pid;
+                return;
+            }
+        } while (currentIndex != start);
+
+        // If loop finishes, everyone passed or dead. Should be handled by
+        // passTurn/processMove checks.
     }
 
     @Scheduled(fixedRate = 1000)

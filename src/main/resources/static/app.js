@@ -148,6 +148,7 @@ function renderGame(gameState) {
     if (gameState.currentTurnPlayerId === playerId && !gameState.gameOver) {
         wordInput.disabled = false;
         sendBtn.disabled = false;
+        passBtn.disabled = false;
         document.getElementById('player-area').classList.add('active-turn');
         document.getElementById('opponent-area').classList.remove('active-turn');
 
@@ -159,6 +160,7 @@ function renderGame(gameState) {
     } else {
         wordInput.disabled = true;
         sendBtn.disabled = true;
+        passBtn.disabled = true;
         document.getElementById('player-area').classList.remove('active-turn');
         document.getElementById('opponent-area').classList.add('active-turn');
     }
@@ -187,6 +189,86 @@ function updatePlayerUI(prefix, player) {
     else if (player.score >= 16) scoreEl.classList.add('score-warning');
     else scoreEl.classList.add('score-safe');
 }
+
+// BGM Logic
+let bgmOscillators = [];
+let isBgmPlaying = false;
+const bgmBtn = document.getElementById('bgm-btn');
+const passBtn = document.getElementById('pass-btn');
+
+function startBGM() {
+    if (isBgmPlaying) return;
+    isBgmPlaying = true;
+    bgmBtn.innerText = "BGM: ON";
+    bgmBtn.classList.add('active');
+
+    // Create a simple Cyberpunk Arpeggio Loop
+    const notes = [110, 130, 146, 164, 110, 97, 87, 97]; // A2, C3, D3, E3...
+    let noteIndex = 0;
+
+    const playNote = () => {
+        if (!isBgmPlaying) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(notes[noteIndex], audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+
+        noteIndex = (noteIndex + 1) % notes.length;
+
+        const nextNoteTime = 0.25; // 16th note at 120BPM approx
+        setTimeout(playNote, nextNoteTime * 1000);
+    };
+
+    // Also add a bass drone
+    const bassOsc = audioCtx.createOscillator();
+    const bassGain = audioCtx.createGain();
+    bassOsc.connect(bassGain);
+    bassGain.connect(audioCtx.destination);
+    bassOsc.type = 'square';
+    bassOsc.frequency.setValueAtTime(55, audioCtx.currentTime); // A1
+    bassGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+    bassOsc.start();
+
+    bgmOscillators.push({ stop: () => bassOsc.stop(), disconnect: () => bassOsc.disconnect() });
+
+    playNote();
+}
+
+function stopBGM() {
+    isBgmPlaying = false;
+    bgmBtn.innerText = "BGM: OFF";
+    bgmBtn.classList.remove('active');
+    bgmOscillators.forEach(o => {
+        try { o.stop(); o.disconnect(); } catch (e) { }
+    });
+    bgmOscillators = [];
+}
+
+bgmBtn.addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (isBgmPlaying) stopBGM();
+    else startBGM();
+});
+
+// Event Listeners for Pass
+passBtn.addEventListener('click', () => {
+    if (stompClient) {
+        stompClient.send("/app/pass", {}, JSON.stringify({ playerId: playerId }));
+        sounds.click();
+    }
+});
+
+// ... existing code ...
 
 // Resume Audio Context on interaction
 document.body.addEventListener('click', () => {
